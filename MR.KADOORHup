@@ -1,6 +1,6 @@
--- [[ ✨ MR.KADOOR ETERNAL - THE ORGANIZED EDITION ✨ ]]
--- Added: รายชื่อผู้เล่นแบบจัดกลุ่มทีม (ทีม > ผู้เล่น) + เลื่อนลิสต์ได้
--- Added: Hitbox & Scale Adjustment | WalkSpeed Toggle
+-- [[ ✨ MR.KADOOR ETERNAL - THE ULTIMATE ORGANIZED EDITION ✨ ]]
+-- Added: รายชื่อผู้เล่นเยื้องใต้หัวข้อทีม (Sub-list Format)
+-- Added: Hitbox & Scale Adjustment (1-20) | WalkSpeed Toggle
 -- Fixed: Visible Check (ล็อคไม่ทะลุจริง) | Individual Warp Delete
 -- Utilities: ESP RGB | FPS | FullBright | Auto Click
 
@@ -57,13 +57,13 @@ end
 local P_Move = CreatePage("เคลื่อนที่", "☁️"); local P_Aim = CreatePage("ล็อคเป้า", "⭐"); local P_Warp = CreatePage("วาร์ป", "🍭"); local P_Player = CreatePage("ผู้เล่น", "🎀"); local P_Misc = CreatePage("อื่นๆ", "⚙️")
 P_Move.Visible = true
 
--- [ ☁️ หมวดเคลื่อนที่ ]
+-- [[ ☁️ เคลื่อนที่ ]]
 AddToggle(P_Move, "☁️ ระบบบิน V2", "Fly"); AddToggle(P_Move, "👻 เดินทะลุ (NoClip)", "NoClip")
 AddToggle(P_Move, "🏃 เปิดใช้งานความเร็ววิ่ง", "WalkSpeedEnabled")
 AddInput(P_Move, "ความเร็ววิ่ง (WALK):", 16, function(v) Config.WalkSpeed = v end)
 AddInput(P_Move, "ความเร็วบิน (FLY):", 60, function(v) Config.FlySpeed = v end)
 
--- [ ⭐ หมวดล็อคเป้า ]
+-- [[ ⭐ ล็อคเป้า ]]
 AddToggle(P_Aim, "⭐ เปิด Aimbot", "Aimbot")
 local TeamBtn = Instance.new("TextButton", P_Aim); TeamBtn.Size = UDim2.new(0.96, 0, 0, 45); TeamBtn.Font = "GothamBold"; TeamBtn.TextSize = 11; Instance.new("UICorner", TeamBtn).CornerRadius = UDim.new(0, 12)
 local function UpdateTeam() TeamBtn.Text = Config.AimTeamMode and "🛡️ โหมด: TEAM" or "💀 โหมด: SOLO"; TeamBtn.BackgroundColor3 = Config.AimTeamMode and Color3.fromRGB(100, 150, 255) or Color3.fromRGB(255, 100, 100) end
@@ -78,7 +78,7 @@ PartBtn.MouseButton1Click:Connect(function() Config.AimPart = (Config.AimPart ==
 AddInput(P_Aim, "พลังการล็อค (1-100):", 50, function(v) Config.AimbotLockPower = v end)
 AddInput(P_Aim, "ระยะ FOV:", 120, function(v) Config.FOV = v end)
 
--- [ 🍭 หมวดวาร์ป ]
+-- [[ 🍭 วาร์ป ]]
 AddToggle(P_Warp, "🔄 วาร์ปออโต้ (วนจุดที่เซฟ)", "AutoWarpPoints")
 AddInput(P_Warp, "ความเร็ววาร์ปวน (วินาที):", 2, function(v) Config.WarpDelay = v end)
 local WarpScroll = Instance.new("ScrollingFrame", P_Warp); WarpScroll.Size = UDim2.new(0.96, 0, 0, 180); WarpScroll.BackgroundTransparency = 0.9; WarpScroll.BackgroundColor3 = Color3.new(0,0,0); WarpScroll.ScrollBarThickness = 2; local WLayout = Instance.new("UIListLayout", WarpScroll); WLayout.Padding = UDim.new(0, 5)
@@ -97,14 +97,14 @@ end
 local SaveBtn = Instance.new("TextButton", P_Warp); SaveBtn.Size = UDim2.new(0.96, 0, 0, 40); SaveBtn.Text = "➕ บันทึกพิกัดจุดนี้"; SaveBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 150); SaveBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 12)
 SaveBtn.MouseButton1Click:Connect(function() table.insert(Config.SavedPoints, lp.Character.HumanoidRootPart.CFrame); UpdateWarpList() end)
 
--- [ 🎀 หมวดผู้เล่น (จัดกลุ่มตามทีมตามสั่ง) ]
+-- [[ 🎀 ผู้เล่น (จัดทีมแบบ Hierarchical) ]]
 local PlayerTop = Instance.new("Frame", P_Player); PlayerTop.Size = UDim2.new(0.96, 0, 0, 100); PlayerTop.BackgroundTransparency = 1; local PTopLay = Instance.new("UIListLayout", PlayerTop); PTopLay.Padding = UDim.new(0, 5)
 local WBtn = Instance.new("TextButton", PlayerTop); WBtn.Size = UDim2.new(1, 0, 0, 45); WBtn.Text = "⚡ วาร์ปหาคน"; WBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255); WBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", WBtn).CornerRadius = UDim.new(0, 12)
 WBtn.MouseButton1Click:Connect(function() if Config.TargetPlayer and Config.TargetPlayer.Character then lp.Character.HumanoidRootPart.CFrame = Config.TargetPlayer.Character.HumanoidRootPart.CFrame end end)
 AddToggle(PlayerTop, "🛸 เกาะหัว (Stay)", "StayPlayer")
 
 local PlayerScroll = Instance.new("ScrollingFrame", P_Player); PlayerScroll.Size = UDim2.new(0.96, 0, 0, 250); PlayerScroll.BackgroundTransparency = 0.9; PlayerScroll.BackgroundColor3 = Color3.new(0,0,0); PlayerScroll.ScrollBarThickness = 3
-local PList = Instance.new("Frame", PlayerScroll); PList.Size = UDim2.new(1, 0, 1, 0); PList.BackgroundTransparency = 1; local PLay = Instance.new("UIListLayout", PList); PLay.Padding = UDim.new(0, 5)
+local PList = Instance.new("Frame", PlayerScroll); PList.Size = UDim2.new(1, 0, 1, 0); PList.BackgroundTransparency = 1; local PLay = Instance.new("UIListLayout", PList); PLay.Padding = UDim.new(0, 4)
 
 local function UpdatePL()
     for _,v in pairs(PList:GetChildren()) do if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then v:Destroy() end end
@@ -112,18 +112,20 @@ local function UpdatePL()
     for _,p in pairs(Players:GetPlayers()) do if p ~= lp then local tName = p.Team and p.Team.Name or "ไม่มีทีม"; if not Teams[tName] then Teams[tName] = {} end table.insert(Teams[tName], p) end end
 
     for tName, pGroup in pairs(Teams) do
-        local TeamHeader = Instance.new("TextLabel", PList); TeamHeader.Size = UDim2.new(1, -10, 0, 25); TeamHeader.Text = "        🚩 ทีม: " .. tName; TeamHeader.TextColor3 = Color3.fromRGB(255, 180, 220); TeamHeader.BackgroundColor3 = Color3.fromRGB(45, 40, 65); TeamHeader.Font = "GothamBold"; TeamHeader.TextSize = 12; TeamHeader.TextXAlignment = "Left"; Instance.new("UICorner", TeamHeader).CornerRadius = UDim.new(0, 5)
+        local TeamHeader = Instance.new("TextLabel", PList); TeamHeader.Size = UDim2.new(1, -10, 0, 28); TeamHeader.Text = "  🚩 ทีม: " .. tName; TeamHeader.TextColor3 = Color3.fromRGB(255, 180, 220); TeamHeader.BackgroundColor3 = Color3.fromRGB(40, 35, 55); TeamHeader.Font = "GothamBold"; TeamHeader.TextSize = 13; TeamHeader.TextXAlignment = "Left"; Instance.new("UICorner", TeamHeader).CornerRadius = UDim.new(0, 6)
         for _,p in pairs(pGroup) do
-            local b = Instance.new("TextButton", PList); b.Size = UDim2.new(1, -10, 0, 35); local isSameTeam = (p.Team == lp.Team and p.Team ~= nil); b.Text = (Config.TargetPlayer == p and "✅ " or "    👤 ") .. p.DisplayName
-            if Config.TargetPlayer == p then b.BackgroundColor3 = Color3.fromRGB(255, 120, 180) elseif isSameTeam then b.BackgroundColor3 = Color3.fromRGB(60, 100, 130) else b.BackgroundColor3 = Color3.fromRGB(50, 45, 75) end
-            b.TextColor3 = isSameTeam and Color3.fromRGB(150, 255, 150) or Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 11; b.TextXAlignment = "Left"; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8); b.MouseButton1Click:Connect(function() Config.TargetPlayer = p; UpdatePL() end)
+            local b = Instance.new("TextButton", PList); b.Size = UDim2.new(0.92, 0, 0, 32); local isSameTeam = (p.Team == lp.Team and p.Team ~= nil)
+            b.Text = (Config.TargetPlayer == p and "       ✅ " or "       👤 ") .. p.DisplayName
+            if Config.TargetPlayer == p then b.BackgroundColor3 = Color3.fromRGB(255, 120, 180) elseif isSameTeam then b.BackgroundColor3 = Color3.fromRGB(55, 85, 110) else b.BackgroundColor3 = Color3.fromRGB(45, 42, 65) end
+            b.TextColor3 = isSameTeam and Color3.fromRGB(160, 255, 160) or Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 11; b.TextXAlignment = "Left"; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6); b.MouseButton1Click:Connect(function() Config.TargetPlayer = p; UpdatePL() end)
         end
+        Instance.new("Frame", PList).Size = UDim2.new(1, 0, 0, 5); PList.GetChildren()[#PList:GetChildren()].BackgroundTransparency = 1
     end
 end
-PLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, PLay.AbsoluteContentSize.Y + 10) end)
+PLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, PLay.AbsoluteContentSize.Y + 15) end)
 task.spawn(function() while task.wait(5) do UpdatePL() end end); UpdatePL()
 
--- [ ⚙️ หมวดอื่นๆ (Hitbox Included) ]
+-- [[ ⚙️ อื่นๆ (Hitbox) ]]
 AddToggle(P_Misc, "⚔️ ออโต้คลิก", "AutoClick"); AddInput(P_Misc, "ความเร็วคลิก:", 0.05, function(v) Config.ClickSpeed = v end)
 AddToggle(P_Misc, "🎯 เปิดใช้งาน Hitbox", "Hitbox"); AddInput(P_Misc, "ขนาด Hitbox (1-20):", 2, function(v) Config.HitboxSize = v end)
 AddToggle(P_Misc, "🌈 ESP RGB (ทะลุ)", "ESP"); AddToggle(P_Misc, "📊 แสดง FPS", "ShowFPS"); AddToggle(P_Misc, "💡 FullBright", "FullBright")
