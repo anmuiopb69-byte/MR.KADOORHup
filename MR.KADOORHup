@@ -1,8 +1,6 @@
--- [[ ✨ MR.KADOOR ETERNAL - THE ULTIMATE ORGANIZED EDITION ✨ ]]
--- Added: รายชื่อผู้เล่นเยื้องใต้หัวข้อทีม (Sub-list Format)
--- Added: Hitbox & Scale Adjustment (1-20) | WalkSpeed Toggle
--- Fixed: Visible Check (ล็อคไม่ทะลุจริง) | Individual Warp Delete
--- Utilities: ESP RGB | FPS | FullBright | Auto Click
+-- [[ ✨ MR.KADOOR ETERNAL - FIXED WALK SPEED LOCK ✨ ]]
+-- Fixed: WalkSpeed now only active when toggled ON. No more permanent lock.
+-- Added: "Cancel Target" button in Player Page.
 
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
@@ -12,7 +10,13 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 
-if CoreGui:FindFirstChild("KadoorEternal") then CoreGui:FindFirstChild("KadoorEternal"):Destroy() end
+-- เลือกที่เก็บ UI
+local ParentUI = CoreGui
+if not pcall(function() local t = Instance.new("Frame", CoreGui); t:Destroy() end) then
+    ParentUI = lp:WaitForChild("PlayerGui")
+end
+
+if ParentUI:FindFirstChild("KadoorEternal") then ParentUI:FindFirstChild("KadoorEternal"):Destroy() end
 
 local Config = {
     AutoClick = false, ClickSpeed = 0.05,
@@ -26,7 +30,7 @@ local Config = {
 }
 
 -- [[ 🎨 UI CONSTRUCTION ]]
-local ScreenGui = Instance.new("ScreenGui", CoreGui); ScreenGui.Name = "KadoorEternal"
+local ScreenGui = Instance.new("ScreenGui", ParentUI); ScreenGui.Name = "KadoorEternal"; ScreenGui.ResetOnSpawn = false
 local Main = Instance.new("Frame", ScreenGui); Main.Size = UDim2.new(0, 450, 0, 520); Main.Position = UDim2.new(0.5, -225, 0.4, -260); Main.BackgroundColor3 = Color3.fromRGB(30, 28, 45); Main.Active = true; Main.Draggable = true; Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 20); local StrokeMain = Instance.new("UIStroke", Main); StrokeMain.Color = Color3.fromRGB(180, 160, 255); StrokeMain.Thickness = 2
 local Header = Instance.new("TextLabel", Main); Header.Size = UDim2.new(1, 0, 0, 45); Header.Text = "✨ MR.KADOOR ETERNAL ✨"; Header.TextColor3 = Color3.fromRGB(255, 180, 220); Header.Font = "GothamBold"; Header.TextSize = 18; Header.BackgroundTransparency = 1
 local SideBar = Instance.new("Frame", Main); SideBar.Size = UDim2.new(0, 120, 1, -60); SideBar.Position = UDim2.new(0, 12, 0, 50); SideBar.BackgroundTransparency = 1; Instance.new("UIListLayout", SideBar).Padding = UDim.new(0, 8)
@@ -42,9 +46,17 @@ local function CreatePage(name, icon)
 end
 
 local function AddToggle(parent, text, cfgKey)
-    local b = Instance.new("TextButton", parent); b.Size = UDim2.new(0.96, 0, 0, 45); b.Text = text; b.BackgroundColor3 = Color3.fromRGB(55, 50, 80); b.TextColor3 = Color3.new(1, 1, 1); b.Font = "GothamBold"; b.TextSize = 11; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
+    local b = Instance.new("TextButton", parent); b.Size = UDim2.new(0.96, 0, 0, 45); b.Text = text; b.BackgroundColor3 = Config[cfgKey] and Color3.fromRGB(255, 120, 180) or Color3.fromRGB(55, 50, 80); b.TextColor3 = Color3.new(1, 1, 1); b.Font = "GothamBold"; b.TextSize = 11; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 12)
     local function Update() b.BackgroundColor3 = Config[cfgKey] and Color3.fromRGB(255, 120, 180) or Color3.fromRGB(55, 50, 80); b.Text = text .. (Config[cfgKey] and " : เปิด" or " : ปิด") end
-    b.MouseButton1Click:Connect(function() Config[cfgKey] = not Config[cfgKey]; Update() end); Update()
+    b.MouseButton1Click:Connect(function() 
+        Config[cfgKey] = not Config[cfgKey]
+        if cfgKey == "WalkSpeedEnabled" and not Config[cfgKey] then
+            if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+                lp.Character.Humanoid.WalkSpeed = 16
+            end
+        end
+        Update() 
+    end); Update()
 end
 
 local function AddInput(parent, title, default, callback)
@@ -57,80 +69,87 @@ end
 local P_Move = CreatePage("เคลื่อนที่", "☁️"); local P_Aim = CreatePage("ล็อคเป้า", "⭐"); local P_Warp = CreatePage("วาร์ป", "🍭"); local P_Player = CreatePage("ผู้เล่น", "🎀"); local P_Misc = CreatePage("อื่นๆ", "⚙️")
 P_Move.Visible = true
 
--- [[ ☁️ เคลื่อนที่ ]]
-AddToggle(P_Move, "☁️ ระบบบิน V2", "Fly"); AddToggle(P_Move, "👻 เดินทะลุ (NoClip)", "NoClip")
-AddToggle(P_Move, "🏃 เปิดใช้งานความเร็ววิ่ง", "WalkSpeedEnabled")
-AddInput(P_Move, "ความเร็ววิ่ง (WALK):", 16, function(v) Config.WalkSpeed = v end)
-AddInput(P_Move, "ความเร็วบิน (FLY):", 60, function(v) Config.FlySpeed = v end)
+-- [ ☁️ หน้าเคลื่อนที่ ]
+AddToggle(P_Move, "☁️ ระบบบิน V2", "Fly"); AddToggle(P_Move, "👻 เดินทะลุ (NoClip)", "NoClip"); AddToggle(P_Move, "🏃 เปิดใช้งานความเร็ววิ่ง", "WalkSpeedEnabled")
+AddInput(P_Move, "ความเร็ววิ่ง (WALK):", 16, function(v) Config.WalkSpeed = v end); AddInput(P_Move, "ความเร็วบิน (FLY):", 60, function(v) Config.FlySpeed = v end)
 
--- [[ ⭐ ล็อคเป้า ]]
+-- [ ⭐ หน้าล็อคเป้า ]
 AddToggle(P_Aim, "⭐ เปิด Aimbot", "Aimbot")
 local TeamBtn = Instance.new("TextButton", P_Aim); TeamBtn.Size = UDim2.new(0.96, 0, 0, 45); TeamBtn.Font = "GothamBold"; TeamBtn.TextSize = 11; Instance.new("UICorner", TeamBtn).CornerRadius = UDim.new(0, 12)
 local function UpdateTeam() TeamBtn.Text = Config.AimTeamMode and "🛡️ โหมด: TEAM" or "💀 โหมด: SOLO"; TeamBtn.BackgroundColor3 = Config.AimTeamMode and Color3.fromRGB(100, 150, 255) or Color3.fromRGB(255, 100, 100) end
 TeamBtn.MouseButton1Click:Connect(function() Config.AimTeamMode = not Config.AimTeamMode; UpdateTeam() end); UpdateTeam()
+AddToggle(P_Aim, "👁️ ล็อคเฉพาะที่เห็น (ไม่ทะลุ)", "VisibleCheck"); AddInput(P_Aim, "พลังการล็อค (1-100):", 50, function(v) Config.AimbotLockPower = v end); AddInput(P_Aim, "ระยะ FOV:", 120, function(v) Config.FOV = v end)
 
-local WallBtn = Instance.new("TextButton", P_Aim); WallBtn.Size = UDim2.new(0.96, 0, 0, 45); WallBtn.Font = "GothamBold"; WallBtn.TextSize = 11; Instance.new("UICorner", WallBtn).CornerRadius = UDim.new(0, 12)
-local function UpdateWall() WallBtn.Text = Config.VisibleCheck and "👁️ ล็อคเฉพาะที่เห็น (ไม่ทะลุ)" or "👻 ล็อคทะลุกำแพง"; WallBtn.BackgroundColor3 = Config.VisibleCheck and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(255, 150, 50) end
-WallBtn.MouseButton1Click:Connect(function() Config.VisibleCheck = not Config.VisibleCheck; UpdateWall() end); UpdateWall()
-
-local PartBtn = Instance.new("TextButton", P_Aim); PartBtn.Size = UDim2.new(0.96, 0, 0, 45); PartBtn.Text = "🎯 ล็อคส่วน : หัว (Head)"; PartBtn.BackgroundColor3 = Color3.fromRGB(80, 60, 100); PartBtn.TextColor3 = Color3.new(1, 1, 1); PartBtn.Font = "GothamBold"; PartBtn.TextSize = 11; Instance.new("UICorner", PartBtn).CornerRadius = UDim.new(0, 12)
-PartBtn.MouseButton1Click:Connect(function() Config.AimPart = (Config.AimPart == "Head" and "HumanoidRootPart" or "Head"); PartBtn.Text = "🎯 ล็อคส่วน : " .. (Config.AimPart == "Head" and "หัว (Head)" or "ตัว (Body)") end)
-AddInput(P_Aim, "พลังการล็อค (1-100):", 50, function(v) Config.AimbotLockPower = v end)
-AddInput(P_Aim, "ระยะ FOV:", 120, function(v) Config.FOV = v end)
-
--- [[ 🍭 วาร์ป ]]
-AddToggle(P_Warp, "🔄 วาร์ปออโต้ (วนจุดที่เซฟ)", "AutoWarpPoints")
-AddInput(P_Warp, "ความเร็ววาร์ปวน (วินาที):", 2, function(v) Config.WarpDelay = v end)
+-- [ 🍭 หน้าวาร์ป ]
+AddToggle(P_Warp, "🔄 วาร์ปออโต้ (วนจุดที่เซฟ)", "AutoWarpPoints"); AddInput(P_Warp, "ความเร็ววาร์ปวน (วินาที):", 2, function(v) Config.WarpDelay = v end)
 local WarpScroll = Instance.new("ScrollingFrame", P_Warp); WarpScroll.Size = UDim2.new(0.96, 0, 0, 180); WarpScroll.BackgroundTransparency = 0.9; WarpScroll.BackgroundColor3 = Color3.new(0,0,0); WarpScroll.ScrollBarThickness = 2; local WLayout = Instance.new("UIListLayout", WarpScroll); WLayout.Padding = UDim.new(0, 5)
-
 local function UpdateWarpList()
     for _,v in pairs(WarpScroll:GetChildren()) do if v:IsA("Frame") then v:Destroy() end end
     for i, pos in pairs(Config.SavedPoints) do
         local Container = Instance.new("Frame", WarpScroll); Container.Size = UDim2.new(1, -10, 0, 35); Container.BackgroundTransparency = 1
         local Goto = Instance.new("TextButton", Container); Goto.Size = UDim2.new(0.8, 0, 1, 0); Goto.Text = "📍 พิกัดที่ " .. i; Goto.BackgroundColor3 = Color3.fromRGB(60, 55, 85); Goto.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", Goto).CornerRadius = UDim.new(0, 8)
-        Goto.MouseButton1Click:Connect(function() lp.Character.HumanoidRootPart.CFrame = pos end)
+        Goto.MouseButton1Click:Connect(function() if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then lp.Character.HumanoidRootPart.CFrame = pos end end)
         local Del = Instance.new("TextButton", Container); Del.Size = UDim2.new(0.18, 0, 1, 0); Del.Position = UDim2.new(0.82, 0, 0, 0); Del.Text = "❌"; Del.BackgroundColor3 = Color3.fromRGB(200, 80, 80); Del.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", Del).CornerRadius = UDim.new(0, 8)
         Del.MouseButton1Click:Connect(function() table.remove(Config.SavedPoints, i); UpdateWarpList() end)
     end
     WarpScroll.CanvasSize = UDim2.new(0,0,0, WLayout.AbsoluteContentSize.Y)
 end
 local SaveBtn = Instance.new("TextButton", P_Warp); SaveBtn.Size = UDim2.new(0.96, 0, 0, 40); SaveBtn.Text = "➕ บันทึกพิกัดจุดนี้"; SaveBtn.BackgroundColor3 = Color3.fromRGB(100, 200, 150); SaveBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", SaveBtn).CornerRadius = UDim.new(0, 12)
-SaveBtn.MouseButton1Click:Connect(function() table.insert(Config.SavedPoints, lp.Character.HumanoidRootPart.CFrame); UpdateWarpList() end)
+SaveBtn.MouseButton1Click:Connect(function() if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then table.insert(Config.SavedPoints, lp.Character.HumanoidRootPart.CFrame); UpdateWarpList() end end)
 
--- [[ 🎀 ผู้เล่น (จัดทีมแบบ Hierarchical) ]]
-local PlayerTop = Instance.new("Frame", P_Player); PlayerTop.Size = UDim2.new(0.96, 0, 0, 100); PlayerTop.BackgroundTransparency = 1; local PTopLay = Instance.new("UIListLayout", PlayerTop); PTopLay.Padding = UDim.new(0, 5)
-local WBtn = Instance.new("TextButton", PlayerTop); WBtn.Size = UDim2.new(1, 0, 0, 45); WBtn.Text = "⚡ วาร์ปหาคน"; WBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255); WBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", WBtn).CornerRadius = UDim.new(0, 12)
+-- [ 🎀 หน้าผู้เล่น (Added Cancel Target) ]
+local PlayerTop = Instance.new("Frame", P_Player); PlayerTop.Size = UDim2.new(0.96, 0, 0, 150); PlayerTop.BackgroundTransparency = 1; local PTopLay = Instance.new("UIListLayout", PlayerTop); PTopLay.Padding = UDim.new(0, 5)
+
+local WBtn = Instance.new("TextButton", PlayerTop); WBtn.Size = UDim2.new(1, 0, 0, 40); WBtn.Text = "⚡ วาร์ปหาคน"; WBtn.BackgroundColor3 = Color3.fromRGB(100, 150, 255); WBtn.TextColor3 = Color3.new(1,1,1); Instance.new("UICorner", WBtn).CornerRadius = UDim.new(0, 12)
 WBtn.MouseButton1Click:Connect(function() if Config.TargetPlayer and Config.TargetPlayer.Character then lp.Character.HumanoidRootPart.CFrame = Config.TargetPlayer.Character.HumanoidRootPart.CFrame end end)
+
+-- ปุ่มยกเลิกการเลือกที่เพิ่มใหม่
+local CancelBtn = Instance.new("TextButton", PlayerTop); CancelBtn.Size = UDim2.new(1, 0, 0, 40); CancelBtn.Text = "❌ ยกเลิกการเลือกผู้เล่น"; CancelBtn.BackgroundColor3 = Color3.fromRGB(220, 80, 80); CancelBtn.TextColor3 = Color3.new(1,1,1); CancelBtn.Font = "GothamBold"; CancelBtn.TextSize = 11; Instance.new("UICorner", CancelBtn).CornerRadius = UDim.new(0, 12)
+local function UpdatePL() -- ใส่ฟังก์ชัน UpdatePL ไว้ข้างในปุ่มเพื่อให้รีเฟรชลิสต์ทันทีที่กดยกเลิก
+
+CancelBtn.MouseButton1Click:Connect(function() 
+    Config.TargetPlayer = nil
+    UpdatePL() -- รีเฟรชลิสต์เพื่อลบเครื่องหมาย ✅ ออก
+end)
+
 AddToggle(PlayerTop, "🛸 เกาะหัว (Stay)", "StayPlayer")
 
-local PlayerScroll = Instance.new("ScrollingFrame", P_Player); PlayerScroll.Size = UDim2.new(0.96, 0, 0, 250); PlayerScroll.BackgroundTransparency = 0.9; PlayerScroll.BackgroundColor3 = Color3.new(0,0,0); PlayerScroll.ScrollBarThickness = 3
-local PList = Instance.new("Frame", PlayerScroll); PList.Size = UDim2.new(1, 0, 1, 0); PList.BackgroundTransparency = 1; local PLay = Instance.new("UIListLayout", PList); PLay.Padding = UDim.new(0, 4)
+local PlayerScroll = Instance.new("ScrollingFrame", P_Player); PlayerScroll.Size = UDim2.new(0.96, 0, 0, 200); PlayerScroll.BackgroundTransparency = 0.9; PlayerScroll.BackgroundColor3 = Color3.new(0,0,0); PlayerScroll.ScrollBarThickness = 3
+local PList = Instance.new("Frame", PlayerScroll); PList.Size = UDim2.new(1, 0, 1, 0); PList.BackgroundTransparency = 1; 
+local PLay = Instance.new("UIListLayout", PList); PLay.Padding = UDim.new(0, 5); PLay.SortOrder = Enum.SortOrder.LayoutOrder
 
-local function UpdatePL()
+function UpdatePL() -- เปลี่ยนเป็น function ปกติเพื่อให้เข้าถึงจากข้างนอกได้
     for _,v in pairs(PList:GetChildren()) do if v:IsA("Frame") or v:IsA("TextButton") or v:IsA("TextLabel") then v:Destroy() end end
     local Teams = {}
-    for _,p in pairs(Players:GetPlayers()) do if p ~= lp then local tName = p.Team and p.Team.Name or "ไม่มีทีม"; if not Teams[tName] then Teams[tName] = {} end table.insert(Teams[tName], p) end end
-
+    for _,p in pairs(Players:GetPlayers()) do 
+        if p ~= lp then 
+            local tName = p.Team and p.Team.Name or "ไม่มีทีม"; if not Teams[tName] then Teams[tName] = {} end 
+            table.insert(Teams[tName], p) 
+        end 
+    end
+    local order = 0
     for tName, pGroup in pairs(Teams) do
-        local TeamHeader = Instance.new("TextLabel", PList); TeamHeader.Size = UDim2.new(1, -10, 0, 28); TeamHeader.Text = "  🚩 ทีม: " .. tName; TeamHeader.TextColor3 = Color3.fromRGB(255, 180, 220); TeamHeader.BackgroundColor3 = Color3.fromRGB(40, 35, 55); TeamHeader.Font = "GothamBold"; TeamHeader.TextSize = 13; TeamHeader.TextXAlignment = "Left"; Instance.new("UICorner", TeamHeader).CornerRadius = UDim.new(0, 6)
+        order = order + 1
+        local TeamHeader = Instance.new("TextLabel", PList)
+        TeamHeader.Size = UDim2.new(1, -10, 0, 28); TeamHeader.Text = "    🚩 ทีม: " .. tName; TeamHeader.TextColor3 = Color3.fromRGB(255, 200, 150); TeamHeader.BackgroundColor3 = Color3.fromRGB(60, 55, 80); TeamHeader.Font = "GothamBold"; TeamHeader.TextSize = 13; TeamHeader.TextXAlignment = "Left"; TeamHeader.LayoutOrder = order; Instance.new("UICorner", TeamHeader).CornerRadius = UDim.new(0, 6)
         for _,p in pairs(pGroup) do
-            local b = Instance.new("TextButton", PList); b.Size = UDim2.new(0.92, 0, 0, 32); local isSameTeam = (p.Team == lp.Team and p.Team ~= nil)
-            b.Text = (Config.TargetPlayer == p and "       ✅ " or "       👤 ") .. p.DisplayName
-            if Config.TargetPlayer == p then b.BackgroundColor3 = Color3.fromRGB(255, 120, 180) elseif isSameTeam then b.BackgroundColor3 = Color3.fromRGB(55, 85, 110) else b.BackgroundColor3 = Color3.fromRGB(45, 42, 65) end
-            b.TextColor3 = isSameTeam and Color3.fromRGB(160, 255, 160) or Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 11; b.TextXAlignment = "Left"; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6); b.MouseButton1Click:Connect(function() Config.TargetPlayer = p; UpdatePL() end)
+            order = order + 1
+            local b = Instance.new("TextButton", PList); b.Size = UDim2.new(1, -10, 0, 35); b.LayoutOrder = order; local isSameTeam = (p.Team == lp.Team and p.Team ~= nil); b.Text = (Config.TargetPlayer == p and "✅ " or "    👤 ") .. p.DisplayName
+            b.BackgroundColor3 = (Config.TargetPlayer == p and Color3.fromRGB(255, 120, 180)) or (isSameTeam and Color3.fromRGB(50, 80, 110)) or Color3.fromRGB(40, 38, 55)
+            b.TextColor3 = isSameTeam and Color3.fromRGB(150, 255, 150) or Color3.new(1,1,1); b.Font = "GothamBold"; b.TextSize = 11; b.TextXAlignment = "Left"; Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+            b.MouseButton1Click:Connect(function() Config.TargetPlayer = p; UpdatePL() end)
         end
-        Instance.new("Frame", PList).Size = UDim2.new(1, 0, 0, 5); PList.GetChildren()[#PList:GetChildren()].BackgroundTransparency = 1
     end
 end
-PLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, PLay.AbsoluteContentSize.Y + 15) end)
+PLay:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() PlayerScroll.CanvasSize = UDim2.new(0, 0, 0, PLay.AbsoluteContentSize.Y + 10) end)
 task.spawn(function() while task.wait(5) do UpdatePL() end end); UpdatePL()
 
--- [[ ⚙️ อื่นๆ (Hitbox) ]]
+-- [ ⚙️ หน้าอื่นๆ ]
 AddToggle(P_Misc, "⚔️ ออโต้คลิก", "AutoClick"); AddInput(P_Misc, "ความเร็วคลิก:", 0.05, function(v) Config.ClickSpeed = v end)
 AddToggle(P_Misc, "🎯 เปิดใช้งาน Hitbox", "Hitbox"); AddInput(P_Misc, "ขนาด Hitbox (1-20):", 2, function(v) Config.HitboxSize = v end)
 AddToggle(P_Misc, "🌈 ESP RGB (ทะลุ)", "ESP"); AddToggle(P_Misc, "📊 แสดง FPS", "ShowFPS"); AddToggle(P_Misc, "💡 FullBright", "FullBright")
 
--- [[ 🚀 LOGICS ]]
+-- [[ 🚀 LOGICS & LOOPS ]]
 task.spawn(function()
     while task.wait(1) do
         for _, p in pairs(Players:GetPlayers()) do
@@ -145,6 +164,25 @@ task.spawn(function()
     end
 end)
 
+task.spawn(function() while true do task.wait(0.01) if Config.AutoClick then game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0)) task.wait(Config.ClickSpeed) end end end)
+task.spawn(function() while true do task.wait(0.5) if Config.AutoWarpPoints and #Config.SavedPoints > 0 then for _, pos in pairs(Config.SavedPoints) do if not Config.AutoWarpPoints then break end if lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then lp.Character.HumanoidRootPart.CFrame = pos end task.wait(Config.WarpDelay) end end end end)
+
+local FpsLabel = Instance.new("TextLabel", ScreenGui); FpsLabel.Size = UDim2.new(0, 100, 0, 30); FpsLabel.Position = UDim2.new(0, 10, 0, 10); FpsLabel.BackgroundTransparency = 1; FpsLabel.TextColor3 = Color3.new(1, 1, 1); FpsLabel.Font = "GothamBold"; FpsLabel.TextSize = 16; FpsLabel.TextXAlignment = "Left"
+local lastUpdate = tick(); local count = 0
+RunService.Heartbeat:Connect(function() count = count + 1 if tick() - lastUpdate >= 1 then FpsLabel.Text = "FPS: " .. count; FpsLabel.Visible = Config.ShowFPS; count = 0; lastUpdate = tick() end end)
+
+local ESP_Folder = ParentUI:FindFirstChild("KadoorESP_Folder") or Instance.new("Folder", ParentUI); ESP_Folder.Name = "KadoorESP_Folder"
+task.spawn(function()
+    while task.wait(0.3) do
+        if not Config.ESP then ESP_Folder:ClearAllChildren() continue end
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= lp and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+                local hl = ESP_Folder:FindFirstChild(p.Name) or Instance.new("Highlight", ESP_Folder); hl.Name = p.Name; hl.Adornee = p.Character; hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            end
+        end
+    end
+end)
+
 local function IsVisible(part)
     if not Config.VisibleCheck then return true end
     local char = lp.Character; if not char then return false end
@@ -153,37 +191,30 @@ local function IsVisible(part)
     local result = workspace:Raycast(origin, direction, rayParams); return result == nil
 end
 
-local FpsLabel = Instance.new("TextLabel", ScreenGui); FpsLabel.Size = UDim2.new(0, 100, 0, 30); FpsLabel.Position = UDim2.new(0, 10, 0, 10); FpsLabel.BackgroundTransparency = 1; FpsLabel.TextColor3 = Color3.new(1, 1, 1); FpsLabel.Font = "GothamBold"; FpsLabel.TextSize = 16; FpsLabel.TextXAlignment = "Left"
-local lastUpdate = tick(); local count = 0
-RunService.Heartbeat:Connect(function() count = count + 1 if tick() - lastUpdate >= 1 then FpsLabel.Text = "FPS: " .. count; FpsLabel.Visible = Config.ShowFPS count = 0; lastUpdate = tick() end end)
-
-local function CreateESP(player)
-    local highlight = Instance.new("Highlight", CoreGui); highlight.Name = "KadoorESP"; highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    RunService.RenderStepped:Connect(function()
-        if Config.ESP and player.Character and player ~= lp then highlight.Adornee = player.Character; local color = Color3.fromHSV(tick() % 5 / 5, 1, 1); highlight.FillColor = color; highlight.OutlineColor = color
-        else highlight.Adornee = nil end
-    end)
-end
-for _, p in pairs(Players:GetPlayers()) do CreateESP(p) end; Players.PlayerAdded:Connect(CreateESP)
-
-task.spawn(function() while true do task.wait(0.1) if Config.AutoClick then game:GetService("VirtualUser"):ClickButton1(Vector2.new(0,0)) task.wait(Config.ClickSpeed) end end end)
-task.spawn(function() while true do task.wait(0.5) if Config.AutoWarpPoints and #Config.SavedPoints > 0 then for _, pos in pairs(Config.SavedPoints) do if not Config.AutoWarpPoints then break end lp.Character.HumanoidRootPart.CFrame = pos task.wait(Config.WarpDelay) end end end end)
-
 local BV = Instance.new("BodyVelocity"); local BG = Instance.new("BodyGyro")
 local FOVCircle = Instance.new("Frame", ScreenGui); FOVCircle.Size = UDim2.new(0, 240, 0, 240); FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5); FOVCircle.Position = UDim2.new(0.5, 0, 0.5, 0); FOVCircle.BackgroundTransparency = 1; local Stroke = Instance.new("UIStroke", FOVCircle); Stroke.Color = Color3.new(1, 0.5, 0.8); Stroke.Thickness = 1.5; Instance.new("UICorner", FOVCircle).CornerRadius = UDim.new(1, 0)
 
 RunService.RenderStepped:Connect(function()
     FOVCircle.Visible = Config.ShowFOV; FOVCircle.Size = UDim2.new(0, Config.FOV*2, 0, Config.FOV*2)
-    local hrp = lp.Character and lp.Character:FindFirstChild("HumanoidRootPart"); local hum = lp.Character and lp.Character:FindFirstChild("Humanoid")
+    if Config.ESP then
+        local rainbow = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+        for _, hl in pairs(ESP_Folder:GetChildren()) do if hl:IsA("Highlight") then hl.FillColor = rainbow; hl.OutlineColor = rainbow end end
+    end
+    local char = lp.Character; local hrp = char and char:FindFirstChild("HumanoidRootPart"); local hum = char and char:FindFirstChild("Humanoid")
     if hrp and hum then
         if Config.Fly then
             BV.Parent = hrp; BG.Parent = hrp; BV.MaxForce = Vector3.new(9e9, 9e9, 9e9); BG.MaxTorque = Vector3.new(9e9, 9e9, 9e9); hum.PlatformStand = true; BG.CFrame = Camera.CFrame
             local moveDir = hum.MoveDirection; local vel = (Camera.CFrame.LookVector * (moveDir.Z < 0 and 1 or moveDir.Z > 0 and -1 or 0) + Camera.CFrame.RightVector * (moveDir.X > 0 and 1 or moveDir.X < 0 and -1 or 0)) * Config.FlySpeed
             if UserInputService:IsKeyDown(Enum.KeyCode.Space) then vel = vel + Vector3.new(0, Config.FlySpeed, 0) elseif UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then vel = vel + Vector3.new(0, -Config.FlySpeed, 0) end
             BV.Velocity = vel
-        else BV.Parent = nil; BG.Parent = nil; hum.PlatformStand = false; hum.WalkSpeed = Config.WalkSpeedEnabled and Config.WalkSpeed or 16 end
-        if Config.NoClip or Config.Fly then for _,v in pairs(lp.Character:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end
-        if Config.StayPlayer and Config.TargetPlayer and Config.TargetPlayer.Character then lp.Character.HumanoidRootPart.CFrame = Config.TargetPlayer.Character.Head.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0) end
+        else 
+            BV.Parent = nil; BG.Parent = nil; hum.PlatformStand = false
+            if Config.WalkSpeedEnabled then 
+                hum.WalkSpeed = Config.WalkSpeed 
+            end
+        end
+        if Config.NoClip or Config.Fly then for _,v in pairs(char:GetDescendants()) do if v:IsA("BasePart") then v.CanCollide = false end end end
+        if Config.StayPlayer and Config.TargetPlayer and Config.TargetPlayer.Character and Config.TargetPlayer.Character:FindFirstChild("Head") then hrp.CFrame = Config.TargetPlayer.Character.Head.CFrame * CFrame.new(0, 7, 0) * CFrame.Angles(math.rad(-90), 0, 0) end
     end
     if Config.Aimbot then
         local target = nil; local dist = Config.FOV; local center = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
@@ -194,9 +225,9 @@ RunService.RenderStepped:Connect(function()
                 if mag < dist and IsVisible(part) then target = part; dist = mag end
             end
         end end
-        if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), math.clamp(Config.AimbotLockPower/100, 0, 1)) end
+        if target then Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, target.Position), Config.AimbotLockPower/100) end
     end
     if Config.FullBright then Lighting.Brightness = 2; Lighting.ClockTime = 14; Lighting.GlobalShadows = false end
 end)
 
-local TBtn = Instance.new("TextButton", ScreenGui); TBtn.Size = UDim2.new(0, 60, 0, 60); TBtn.Position = UDim2.new(0, 20, 0.5, 0); TBtn.Text = "❤️"; TBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 180); TBtn.TextColor3 = Color3.new(1,1,1); TBtn.Draggable = true; Instance.new("UICorner", TBtn).CornerRadius = UDim.new(1,0); TBtn.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+local TBtn = Instance.new("TextButton", ScreenGui); TBtn.Size = UDim2.new(0, 60, 0, 60); TBtn.Position = UDim2.new(0, 20, 0.5, 0); TBtn.Text = "❤️"; TBtn.BackgroundColor3 = Color3.fromRGB(255, 120, 180); TBtn.Draggable = true; Instance.new("UICorner", TBtn).CornerRadius = UDim.new(1,0); 
